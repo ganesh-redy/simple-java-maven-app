@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+    environment {
+        IMAGE_NAME = "python-okay"
+        ARTIFACT_REPO = "us-central1-docker.pkg.dev/mythic-inn-420620/my-docker-repo1"
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('github-owner')
+    }
+    stages {
+        stage("DockerHub Connect") {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credential', 
+                                                  usernameVariable: 'DOCKER_USER', 
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage("Authenticate with Google Cloud") {
+            steps {
+                sh '''
+                gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+                gcloud auth configure-docker us-central1-docker.pkg.dev
+                '''
+            }
+        }
+        
+        stage("mvn to create war file") {
+            steps {
+                sh '''
+                mvn clean package
+                '''
+            }
+        }
+
+        stage("Build Image") {
+            steps {
+                sh '''
+                docker build -t $IMAGE_NAME:${BUILD_NUMBER} .
+                docker tag $IMAGE_NAME:${BUILD_NUMBER} ganesh6498/$IMAGE_NAME:${BUILD_NUMBER}
+                docker push ganesh6498/$IMAGE_NAME:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage('Push to Google Artifact Registry') {
+            steps {
+                sh '''
+                docker tag $IMAGE_NAME:${BUILD_NUMBER} ${ARTIFACT_REPO}/${IMAGE_NAME}:${BUILD_NUMBER}
+                docker push ${ARTIFACT_REPO}/${IMAGE_NAME}:${BUILD_NUMBER}
+                '''
+            }
+        }
+    }
+    post {
+        failure {
+            mail {
+                to: 'ganeshreddy6498@gmail.com, ganeshreddy7610@gmail.com',
+                subject: 'Pipeline failed: $BUILD_NUMBER',
+                body: 'The pipeline has failed. Please check the logs for more details.'
+            }
+        }
+        success {
+            mail {
+                to: 'ganeshreddy6498@gmail.com, ganeshreddy7610@gmail.com',
+                subject: 'Pipeline succeeded: $BUILD_NUMBER',
+                body: 'The pipeline has successfully completed. The build number is $BUILD_NUMBER.'
+            }
+        }
+    }
+}
