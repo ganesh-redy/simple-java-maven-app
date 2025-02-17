@@ -56,18 +56,18 @@ pipeline {
     }
     post {
         failure {
-            mail {
-                to: 'ganeshreddy6498@gmail.com, ganeshreddy7610@gmail.com',
-                subject: 'Pipeline failed: $BUILD_NUMBER',
+            mail(
+                to: ['ganeshreddy6498@gmail.com', 'ganeshreddy7610@gmail.com'],
+                subject: "Pipeline failed: $BUILD_NUMBER",
                 body: 'The pipeline has failed. Please check the logs for more details.'
-            }
+            )
         }
         success {
-            mail {
-                to: 'ganeshreddy6498@gmail.com, ganeshreddy7610@gmail.com',
-                subject: 'Pipeline succeeded: $BUILD_NUMBER',
+            mail(
+                to: ['ganeshreddy6498@gmail.com', 'ganeshreddy7610@gmail.com'],
+                subject: "Pipeline succeeded: $BUILD_NUMBER",
                 body: 'The pipeline has successfully completed. The build number is $BUILD_NUMBER.'
-            }
+            )
         }
     }
 }
