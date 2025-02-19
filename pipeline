@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        IMAGE_NAME = "python-okay"
+        IMAGE_NAME = "java-mavan"
         ARTIFACT_REPO = "us-central1-docker.pkg.dev/mythic-inn-420620/my-docker-repo1"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('github-owner')
     }
